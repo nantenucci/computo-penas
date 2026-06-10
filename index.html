@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cómputo de Pena</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    background: #d6e4f0;
+    padding: 20px;
+  }
+  h1 {
+    background: #1a3a5c;
+    color: #fff;
+    text-align: center;
+    padding: 10px;
+    font-size: 16px;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    border-radius: 4px;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid #aac4de;
+    border-radius: 4px;
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .card-header {
+    background: #1a3a5c;
+    color: #fff;
+    padding: 6px 12px;
+    font-weight: bold;
+    font-size: 13px;
+  }
+  .card-body { padding: 12px; }
+
+  /* Ley aplicable */
+  .ley-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .ley-row label { font-weight: bold; }
+  .ley-row select { padding: 4px 8px; border: 1px solid #aac4de; border-radius: 3px; }
+  .ley-nota {
+    background: #fffbe6;
+    border: 1px solid #f0c040;
+    border-radius: 3px;
+    padding: 6px 10px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #5a4a00;
+  }
+
+  /* Detenciones */
+  #tabla-detenciones { width: 100%; border-collapse: collapse; }
+  #tabla-detenciones th {
+    background: #3a6ea8;
+    color: #fff;
+    padding: 5px 8px;
+    text-align: center;
+    font-size: 12px;
+  }
+  #tabla-detenciones td { padding: 4px 6px; vertical-align: middle; }
+  #tabla-detenciones tr:nth-child(even) td { background: #f0f6ff; }
+  #tabla-detenciones input[type=date] {
+    padding: 3px 5px;
+    border: 1px solid #aac4de;
+    border-radius: 3px;
+    font-size: 12px;
+    width: 145px;
+  }
+  .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+  .btn-secondary {
+    padding: 5px 14px;
+    background: #3a6ea8;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .btn-secondary:hover { background: #1a3a5c; }
+
+  /* Condena */
+  .condena-grid { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+  .condena-tipo { display: flex; flex-direction: column; gap: 6px; }
+  .condena-tipo label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .condena-tiempo { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .condena-tiempo .campo { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .condena-tiempo .campo span { font-size: 11px; color: #555; }
+  .condena-tiempo input[type=number] {
+    width: 64px;
+    padding: 4px 6px;
+    border: 1px solid #aac4de;
+    border-radius: 3px;
+    text-align: center;
+    font-size: 14px;
+  }
+  .condena-tiempo input[type=number]:disabled { background: #eee; }
+
+  /* Botones principales */
+  .action-row { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; }
+  .btn-calcular {
+    padding: 8px 28px;
+    background: #1a7a1a;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 1px;
+  }
+  .btn-calcular:hover { background: #145a14; }
+  .btn-imprimir {
+    padding: 8px 22px;
+    background: #1a3a5c;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .btn-imprimir:hover { background: #0e2240; }
+  .btn-limpiar {
+    padding: 8px 22px;
+    background: #888;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .btn-limpiar:hover { background: #555; }
+
+  /* Resultados */
+  #resultados { display: none; }
+  .resultado-grid { width: 100%; border-collapse: collapse; }
+  .resultado-grid td { padding: 7px 12px; border-bottom: 1px solid #ddeeff; }
+  .resultado-grid tr:last-child td { border-bottom: none; }
+  .resultado-grid .etiqueta {
+    font-weight: bold;
+    color: #1a3a5c;
+    width: 55%;
+    font-size: 13px;
+  }
+  .resultado-grid .valor {
+    font-size: 14px;
+    font-weight: bold;
+    color: #c00;
+  }
+  .resultado-grid .sub {
+    font-size: 11px;
+    color: #555;
+    font-weight: normal;
+    display: block;
+  }
+  .resultado-grid tr.highlight td { background: #fffbe6; }
+  .resultado-grid tr.highlight .valor { color: #b06000; }
+
+  /* Error */
+  .error-msg {
+    background: #ffeaea;
+    border: 1px solid #f44;
+    color: #900;
+    padding: 8px 12px;
+    border-radius: 3px;
+    margin-top: 8px;
+    font-size: 12px;
+    display: none;
+  }
+
+  /* Notas libertad asistida */
+  .nota-la {
+    background: #f0f6ff;
+    border: 1px solid #aac4de;
+    border-radius: 3px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #333;
+  }
+  .nota-la strong { color: #1a3a5c; }
+
+  /* Encabezado en una fila */
+  .encabezado-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+  }
+  .campo-exp { display: flex; flex-direction: column; gap: 4px; }
+  .campo-exp label { font-weight: bold; font-size: 12px; color: #1a3a5c; white-space: nowrap; }
+  .campo-exp--imputado { flex: 2; min-width: 180px; }
+  .campo-exp--cuij     { flex: 1; min-width: 140px; }
+  .campo-exp--ley      { flex: 0 0 auto; }
+  .campo-exp input[type=text] {
+    padding: 5px 8px;
+    border: 1px solid #aac4de;
+    border-radius: 3px;
+    font-size: 13px;
+    width: 100%;
+  }
+  .campo-exp select {
+    padding: 5px 8px;
+    border: 1px solid #aac4de;
+    border-radius: 3px;
+    font-size: 13px;
+  }
+  @media (max-width: 600px) { .encabezado-row { flex-direction: column; } }
+
+  /* Detenciones + Condena en fila */
+  .det-condena-row {
+    display: flex;
+    gap: 0;
+    align-items: flex-start;
+  }
+  .det-col {
+    flex: 2;
+    min-width: 0;
+  }
+  .condena-col {
+    flex: 1;
+    min-width: 240px;
+    padding-left: 20px;
+  }
+  .divisor-v {
+    width: 1px;
+    background: #aac4de;
+    align-self: stretch;
+    margin: 0 16px;
+    flex-shrink: 0;
+  }
+  .subcabecera {
+    font-weight: bold;
+    font-size: 11px;
+    color: #fff;
+    background: #3a6ea8;
+    padding: 3px 8px;
+    border-radius: 3px;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+  }
+  @media (max-width: 700px) {
+    .det-condena-row { flex-direction: column; }
+    .divisor-v { width: 100%; height: 1px; margin: 14px 0; align-self: auto; }
+    .condena-col { padding-left: 0; min-width: 0; }
+  }
+
+  /* PDF / Print */
+  .btn-pdf {
+    padding: 8px 22px;
+    background: #c00;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .btn-pdf:hover { background: #900; }
+
+  @media print {
+    body { background: #fff; padding: 0; font-size: 12px; }
+    .btn-row, .action-row, .btn-calcular, .btn-imprimir, .btn-limpiar,
+    .btn-secondary, .btn-pdf, .ley-nota, #nota-la-card { display: none !important; }
+    #resultados { display: block !important; }
+    .card { border: 1px solid #999; margin-bottom: 10px; break-inside: avoid; }
+    .card-header { background: #1a3a5c !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .resultado-grid tr.highlight td { background: #fffbe6 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    h1 { background: #1a3a5c !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    #print-footer { display: block !important; }
+  }
+  #print-footer {
+    display: none;
+    text-align: center;
+    font-size: 10px;
+    color: #666;
+    margin-top: 20px;
+    border-top: 1px solid #ccc;
+    padding-top: 6px;
+  }
+</style>
+</head>
+<body>
+
+<h1>PROCESO DE CÓMPUTO DE PENA</h1>
+
+<!-- Expediente + Ley en una sola fila -->
+<div class="card">
+  <div class="card-header">DATOS DEL EXPEDIENTE</div>
+  <div class="card-body">
+    <div class="encabezado-row">
+      <div class="campo-exp campo-exp--imputado">
+        <label for="imputado">Nombre del imputado/a</label>
+        <input type="text" id="imputado" placeholder="Apellido, Nombre">
+      </div>
+      <div class="campo-exp campo-exp--cuij">
+        <label for="cuij">CUIJ / FRO</label>
+        <input type="text" id="cuij" placeholder="Ej: 21-12345678-9 / FRO 00001">
+      </div>
+      <div class="campo-exp campo-exp--ley">
+        <label for="ley">Ley aplicable (lib. asistida)</label>
+        <select id="ley">
+          <option value="-">—</option>
+          <option value="27">Ley 27.375</option>
+          <option value="26">Ley 26.813</option>
+          <option value="ambas">Ambas leyes</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Detenciones + Condena en una sola fila -->
+<div class="card">
+  <div class="card-header">DETENCIONES Y CONDENA</div>
+  <div class="card-body det-condena-row">
+
+    <!-- Columna izquierda: Detenciones -->
+    <div class="det-col">
+      <div class="subcabecera">DETENCIONES</div>
+      <table id="tabla-detenciones">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Fecha de Detención</th>
+            <th>Cese de Medida de Coerción</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-detenciones"></tbody>
+      </table>
+      <div class="btn-row" style="margin-top:6px;">
+        <button class="btn-secondary" onclick="agregarFila()">+ Agregar período</button>
+        <button class="btn-secondary" onclick="quitarFila()">− Quitar período</button>
+      </div>
+      <div id="error-detenciones" class="error-msg"></div>
+    </div>
+
+    <!-- Divisor vertical -->
+    <div class="divisor-v"></div>
+
+    <!-- Columna derecha: Condena -->
+    <div class="condena-col">
+      <div class="subcabecera">CONDENA</div>
+      <div class="condena-grid">
+        <div class="condena-tipo">
+          <label>
+            <input type="radio" name="tipo-condena" value="perpetua" onchange="toggleTipo()">
+            Prisión Perpetua
+          </label>
+          <label>
+            <input type="radio" name="tipo-condena" value="temporal" onchange="toggleTipo()" checked>
+            Prisión Temporal
+          </label>
+        </div>
+        <div class="condena-tiempo">
+          <div class="campo">
+            <input type="number" id="anios" min="0" max="50" value="0">
+            <span>Años</span>
+          </div>
+          <div class="campo">
+            <input type="number" id="meses" min="0" max="11" value="0">
+            <span>Meses</span>
+          </div>
+          <div class="campo">
+            <input type="number" id="dias" min="0" max="30" value="0">
+            <span>Días</span>
+          </div>
+        </div>
+      </div>
+      <div id="error-condena" class="error-msg"></div>
+      <div class="action-row" style="margin-top:14px;">
+        <button class="btn-calcular" onclick="calcular()">CALCULAR</button>
+        <button class="btn-pdf" onclick="exportarPDF()">&#x2B07; PDF</button>
+        <button class="btn-imprimir" onclick="window.print()">IMPRIMIR</button>
+        <button class="btn-limpiar" onclick="limpiar()">LIMPIAR</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Resultados -->
+<div class="card" id="resultados">
+  <div class="card-header">RESULTADO DEL CÓMPUTO</div>
+  <div class="card-body">
+    <table class="resultado-grid" id="tabla-expediente-result" style="margin-bottom:10px;">
+      <tr id="fila-result-imputado" style="display:none;">
+        <td class="etiqueta">Imputado/a</td>
+        <td class="valor" id="r-imputado" style="color:#1a3a5c;font-size:15px;">—</td>
+      </tr>
+      <tr id="fila-result-cuij" style="display:none;">
+        <td class="etiqueta">CUIJ / FRO</td>
+        <td class="valor" id="r-cuij" style="color:#1a3a5c;">—</td>
+      </tr>
+    </table>
+    <table class="resultado-grid">
+      <tr>
+        <td class="etiqueta">Primer día de detención</td>
+        <td class="valor" id="r-primer-dia">—</td>
+      </tr>
+      <tr>
+        <td class="etiqueta">Días efectivos en detención</td>
+        <td class="valor" id="r-dias-detenidos">—</td>
+      </tr>
+      <tr>
+        <td class="etiqueta">Condena impuesta</td>
+        <td class="valor" id="r-condena">—</td>
+      </tr>
+      <tr class="highlight">
+        <td class="etiqueta">
+          Mitad de la condena
+          <span class="sub">Art. 13 CP (libertad condicional — requisito temporal)</span>
+        </td>
+        <td class="valor" id="r-mitad">—</td>
+      </tr>
+      <tr>
+        <td class="etiqueta">
+          Dos tercios (2/3) de la condena
+          <span class="sub">Libertad condicional — Ley 24.660 art. 28</span>
+        </td>
+        <td class="valor" id="r-dos-tercios">—</td>
+      </tr>
+      <tr id="fila-la-27" style="display:none;">
+        <td class="etiqueta">
+          Fecha libertad asistida
+          <span class="sub">Ley 27.375 — 6 meses antes del vencimiento</span>
+        </td>
+        <td class="valor" id="r-la-27">—</td>
+      </tr>
+      <tr id="fila-la-26" style="display:none;">
+        <td class="etiqueta">
+          Fecha libertad asistida
+          <span class="sub">Ley 26.813 — 6 meses antes del vencimiento</span>
+        </td>
+        <td class="valor" id="r-la-26">—</td>
+      </tr>
+      <tr>
+        <td class="etiqueta">
+          <strong>Fecha cumplimiento total de pena</strong>
+        </td>
+        <td class="valor" id="r-cumplimiento" style="font-size:16px;color:#c00;">—</td>
+      </tr>
+    </table>
+
+    <div id="nota-perpetua" style="display:none;margin-top:10px;" class="ley-nota">
+      <strong>Prisión perpetua:</strong> El cumplimiento total no aplica. Las fechas de mitad de condena y 2/3 se calculan sobre la base de 35 años (conforme art. 13 y 28 Ley 24.660 para el cómputo de beneficios).
+    </div>
+  </div>
+</div>
+
+<div id="print-footer">
+  Cómputo generado el <span id="print-fecha"></span> — Sistema de Cómputo de Penas
+</div>
+
+<!-- Nota Libertad Asistida -->
+<div class="card" id="nota-la-card" style="display:none;">
+  <div class="card-header">LIBERTADES ASISTIDAS — CONSIDERACIONES</div>
+  <div class="card-body nota-la">
+    <strong>Ley 27.375:</strong> La libertad asistida procede 6 meses antes del agotamiento de la pena. El juez de ejecución podrá denegar la incorporación al régimen excepcionalmente, por resolución fundada, cuando considere que el condenado puede constituir un peligro para sí o para terceros (art. 54 Ley 24.660 modif. por Ley 27.375).<br><br>
+    <strong>Ley 26.813:</strong> La libertad asistida procede 6 meses antes del agotamiento de la pena. Se aplica a hechos cometidos con anterioridad a la vigencia de la Ley 27.375 (01/11/2017), salvo que resulte más favorable la nueva ley.
+  </div>
+</div>
+
+<script>
+// ===== Estado =====
+let filasDetenciones = 0;
+
+// ===== Inicialización =====
+document.addEventListener('DOMContentLoaded', () => {
+  agregarFila();
+});
+
+// ===== Filas de detenciones =====
+function agregarFila() {
+  filasDetenciones++;
+  const tbody = document.getElementById('tbody-detenciones');
+  const tr = document.createElement('tr');
+  tr.id = 'fila-' + filasDetenciones;
+  tr.innerHTML = `
+    <td style="text-align:center;color:#555;">${filasDetenciones}</td>
+    <td><input type="date" id="det-inicio-${filasDetenciones}" class="det-inicio"></td>
+    <td><input type="date" id="det-fin-${filasDetenciones}" class="det-fin" placeholder="(aún detenido)"></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function quitarFila() {
+  if (filasDetenciones <= 1) return;
+  const tbody = document.getElementById('tbody-detenciones');
+  const ultima = document.getElementById('fila-' + filasDetenciones);
+  tbody.removeChild(ultima);
+  filasDetenciones--;
+}
+
+function toggleTipo() {
+  const tipo = document.querySelector('input[name="tipo-condena"]:checked').value;
+  const campos = ['anios','meses','dias'];
+  campos.forEach(id => {
+    document.getElementById(id).disabled = (tipo === 'perpetua');
+  });
+  if (tipo === 'perpetua') {
+    document.getElementById('anios').value = 35;
+    document.getElementById('meses').value = 0;
+    document.getElementById('dias').value = 0;
+  }
+}
+
+// ===== Utilidades de fecha =====
+function parseDate(str) {
+  if (!str) return null;
+  const [y, m, d] = str.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function formatDate(date) {
+  if (!date) return '—';
+  const d = String(date.getDate()).padStart(2,'0');
+  const m = String(date.getMonth() + 1).padStart(2,'0');
+  const y = date.getFullYear();
+  return `${d}/${m}/${y}`;
+}
+
+function addDays(date, days) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+function subtractMonths(date, months) {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() - months);
+  return d;
+}
+
+function diffDays(a, b) {
+  return Math.floor((b - a) / (1000 * 60 * 60 * 24));
+}
+
+// Suma condena en días (usando años = 365, meses = 30 para cómputo penal)
+function sentenceToDays(y, m, d) {
+  return y * 365 + m * 30 + d;
+}
+
+// Agrega condena (años, meses, días) a una fecha de forma exacta por calendario
+function addSentence(date, anios, meses, dias) {
+  let d = new Date(date);
+  d.setFullYear(d.getFullYear() + anios);
+  d.setMonth(d.getMonth() + meses);
+  d.setDate(d.getDate() + dias);
+  // Retroceder 1 día: el último día de condena es el día previo al vencimiento
+  // En la práctica argentina, se usa el día en que comienza, siendo el último inclusive
+  return d;
+}
+
+// Dado un offset en días de condena efectiva, retorna la fecha calendario
+// teniendo en cuenta los períodos de detención (gaps excluidos)
+function dateAtSentenceDay(detenciones, targetDays) {
+  if (targetDays <= 0) return detenciones[0].inicio;
+
+  let accumulated = 0;
+
+  for (let i = 0; i < detenciones.length; i++) {
+    const ini = detenciones[i].inicio;
+    const fin = detenciones[i].fin || new Date(9999, 0, 1);
+    const daysInPeriod = diffDays(ini, fin);
+
+    if (accumulated + daysInPeriod >= targetDays) {
+      // La fecha cae en este período
+      const offset = targetDays - accumulated;
+      return addDays(ini, offset);
+    }
+    accumulated += daysInPeriod;
+  }
+
+  // Si supera todos los períodos (no debería pasar con datos válidos)
+  const last = detenciones[detenciones.length - 1];
+  const lastFin = last.fin || new Date();
+  return addDays(lastFin, targetDays - accumulated);
+}
+
+// ===== Cálculo principal =====
+function calcular() {
+  ocultarErrores();
+
+  // 1. Leer detenciones
+  const detenciones = [];
+  for (let i = 1; i <= filasDetenciones; i++) {
+    const iniStr = document.getElementById('det-inicio-' + i)?.value;
+    const finStr = document.getElementById('det-fin-' + i)?.value;
+    if (!iniStr) continue;
+    detenciones.push({
+      inicio: parseDate(iniStr),
+      fin: finStr ? parseDate(finStr) : null
+    });
+  }
+
+  if (detenciones.length === 0) {
+    mostrarError('error-detenciones', 'Debe ingresar al menos una fecha de detención.');
+    return;
+  }
+
+  // Ordenar por fecha de inicio
+  detenciones.sort((a, b) => a.inicio - b.inicio);
+
+  // Validar solapamientos
+  for (let i = 0; i < detenciones.length - 1; i++) {
+    const finActual = detenciones[i].fin;
+    const iniSig = detenciones[i + 1].inicio;
+    if (finActual && iniSig <= finActual) {
+      mostrarError('error-detenciones', `Los períodos de detención ${i+1} y ${i+2} se solapan. Verifique las fechas.`);
+      return;
+    }
+    if (!finActual) {
+      mostrarError('error-detenciones', `El período ${i+1} no tiene fecha de cese pero hay un período posterior. Ingrese la fecha de cese.`);
+      return;
+    }
+  }
+
+  // 2. Leer condena
+  const tipo = document.querySelector('input[name="tipo-condena"]:checked').value;
+  const anios = parseInt(document.getElementById('anios').value) || 0;
+  const meses = parseInt(document.getElementById('meses').value) || 0;
+  const dias  = parseInt(document.getElementById('dias').value) || 0;
+
+  if (tipo === 'temporal' && anios === 0 && meses === 0 && dias === 0) {
+    mostrarError('error-condena', 'Ingrese la duración de la condena.');
+    return;
+  }
+
+  // 3. Calcular días totales en detención
+  let diasDetenidos = 0;
+  for (const d of detenciones) {
+    const fin = d.fin || new Date();
+    diasDetenidos += diffDays(d.inicio, fin);
+  }
+
+  // 4. Calcular días totales de condena
+  const totalDiasCondena = sentenceToDays(anios, meses, dias);
+
+  // 5. Calcular fechas de hitos
+  // La fecha de cumplimiento total se calcula sumando la condena a la primera detención,
+  // luego sumando los gaps entre períodos
+
+  const primeraDetencion = detenciones[0].inicio;
+
+  // Calcular total de días de gaps entre períodos
+  let totalGaps = 0;
+  for (let i = 0; i < detenciones.length - 1; i++) {
+    const fin = detenciones[i].fin;
+    const sig = detenciones[i + 1].inicio;
+    if (fin) totalGaps += diffDays(fin, sig);
+  }
+
+  // Fecha cumplimiento total = primera detención + condena (calendario) + gaps
+  let fechaCumplimiento;
+  if (tipo === 'perpetua') {
+    fechaCumplimiento = null;
+  } else {
+    fechaCumplimiento = addDays(addSentence(primeraDetencion, anios, meses, dias), totalGaps);
+  }
+
+  // Mitad de condena (días exactos de la mitad del total)
+  const diasMitad = Math.ceil(totalDiasCondena / 2);
+  const fechaMitad = dateAtSentenceDay(detenciones, diasMitad);
+
+  // Dos tercios (2/3)
+  const diasDosTercios = Math.ceil(totalDiasCondena * 2 / 3);
+  const fechaDosTercios = dateAtSentenceDay(detenciones, diasDosTercios);
+
+  // Libertad asistida: 6 meses antes del cumplimiento total
+  let fechaLA27 = null, fechaLA26 = null;
+  if (fechaCumplimiento) {
+    fechaLA27 = subtractMonths(fechaCumplimiento, 6);
+    fechaLA26 = subtractMonths(fechaCumplimiento, 6);
+  }
+
+  // 6. Datos del expediente
+  const imputado = document.getElementById('imputado').value.trim();
+  const cuij     = document.getElementById('cuij').value.trim();
+  const filaImp  = document.getElementById('fila-result-imputado');
+  const filaCuij = document.getElementById('fila-result-cuij');
+  if (imputado) {
+    document.getElementById('r-imputado').textContent = imputado;
+    filaImp.style.display = '';
+  } else { filaImp.style.display = 'none'; }
+  if (cuij) {
+    document.getElementById('r-cuij').textContent = cuij;
+    filaCuij.style.display = '';
+  } else { filaCuij.style.display = 'none'; }
+
+  // Footer de impresión
+  document.getElementById('print-fecha').textContent = formatDate(new Date());
+
+  // 7. Mostrar resultados
+  const ley = document.getElementById('ley').value;
+
+  document.getElementById('r-primer-dia').textContent     = formatDate(primeraDetencion);
+  document.getElementById('r-dias-detenidos').textContent = diasDetenidos + ' días';
+  document.getElementById('r-condena').textContent        = tipo === 'perpetua'
+    ? 'Prisión Perpetua (base 35 años para cómputo)'
+    : `${anios} año(s), ${meses} mes(es), ${dias} día(s) = ${totalDiasCondena} días`;
+  document.getElementById('r-mitad').textContent          = formatDate(fechaMitad);
+  document.getElementById('r-dos-tercios').textContent    = formatDate(fechaDosTercios);
+  document.getElementById('r-cumplimiento').textContent   = fechaCumplimiento
+    ? formatDate(fechaCumplimiento)
+    : 'No aplica (perpetua)';
+
+  // Libertad asistida según ley elegida
+  const fila27 = document.getElementById('fila-la-27');
+  const fila26 = document.getElementById('fila-la-26');
+  const notaLA = document.getElementById('nota-la-card');
+
+  fila27.style.display = 'none';
+  fila26.style.display = 'none';
+  notaLA.style.display = 'none';
+
+  if (fechaCumplimiento) {
+    if (ley === '27' || ley === 'ambas') {
+      document.getElementById('r-la-27').textContent = formatDate(fechaLA27);
+      fila27.style.display = '';
+    }
+    if (ley === '26' || ley === 'ambas') {
+      document.getElementById('r-la-26').textContent = formatDate(fechaLA26);
+      fila26.style.display = '';
+    }
+    if (ley !== '-') notaLA.style.display = '';
+  }
+
+  document.getElementById('nota-perpetua').style.display = tipo === 'perpetua' ? '' : 'none';
+  document.getElementById('resultados').style.display = 'block';
+  document.getElementById('resultados').scrollIntoView({ behavior: 'smooth' });
+}
+
+function mostrarError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function ocultarErrores() {
+  ['error-detenciones','error-condena'].forEach(id => {
+    const el = document.getElementById(id);
+    el.style.display = 'none';
+    el.textContent = '';
+  });
+}
+
+function exportarPDF() {
+  const resultados = document.getElementById('resultados');
+  if (resultados.style.display === 'none' || resultados.style.display === '') {
+    if (resultados.style.display === 'none') {
+      alert('Primero calculá el cómputo antes de exportar.');
+      return;
+    }
+  }
+  // Configurar título de la ventana para el nombre del PDF
+  const imputado = document.getElementById('imputado').value.trim();
+  const cuij = document.getElementById('cuij').value.trim();
+  const tituloOriginal = document.title;
+  if (imputado) {
+    document.title = 'Computo_' + imputado.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, '').replace(/\s+/g, '_');
+  } else if (cuij) {
+    document.title = 'Computo_' + cuij.replace(/\s/g, '_');
+  } else {
+    document.title = 'Computo_de_Pena';
+  }
+  window.print();
+  document.title = tituloOriginal;
+}
+
+function limpiar() {
+  // Limpiar detenciones
+  const tbody = document.getElementById('tbody-detenciones');
+  tbody.innerHTML = '';
+  filasDetenciones = 0;
+  agregarFila();
+  // Limpiar condena
+  document.getElementById('anios').value = 0;
+  document.getElementById('meses').value = 0;
+  document.getElementById('dias').value = 0;
+  document.querySelector('input[value="temporal"]').checked = true;
+  document.getElementById('anios').disabled = false;
+  document.getElementById('meses').disabled = false;
+  document.getElementById('dias').disabled = false;
+  document.getElementById('ley').value = '-';
+  document.getElementById('imputado').value = '';
+  document.getElementById('cuij').value = '';
+  // Ocultar resultados
+  document.getElementById('resultados').style.display = 'none';
+  document.getElementById('nota-la-card').style.display = 'none';
+  ocultarErrores();
+}
+</script>
+
+</body>
+</html>
