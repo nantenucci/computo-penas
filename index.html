@@ -407,6 +407,13 @@
         <td class="etiqueta">Condena impuesta</td>
         <td class="valor" id="r-condena">—</td>
       </tr>
+      <tr id="fila-8meses" style="display:none;" class="highlight">
+        <td class="etiqueta">
+          8 meses de condena
+          <span class="sub">Art. 13 CP — libertad condicional (pena de 3 años o menos)</span>
+        </td>
+        <td class="valor" id="r-8meses">—</td>
+      </tr>
       <tr class="highlight">
         <td class="etiqueta">
           Mitad de la condena
@@ -660,6 +667,12 @@ function calcular() {
     fechaCumplimiento = addDays(addSentence(primeraDetencion, anios, meses, dias), totalGaps);
   }
 
+  // 8 meses Art. 13 CP (solo si condena <= 3 años)
+  const TRES_ANIOS_DIAS = sentenceToDays(3, 0, 0);
+  const esPenaCorta = tipo === 'temporal' && totalDiasCondena <= TRES_ANIOS_DIAS;
+  const dias8Meses = sentenceToDays(0, 8, 0);
+  const fecha8Meses = esPenaCorta ? dateAtSentenceDay(detenciones, dias8Meses) : null;
+
   // Mitad de condena (días exactos de la mitad del total)
   const diasMitad = Math.ceil(totalDiasCondena / 2);
   const fechaMitad = dateAtSentenceDay(detenciones, diasMitad);
@@ -700,6 +713,15 @@ function calcular() {
   document.getElementById('r-condena').textContent        = tipo === 'perpetua'
     ? 'Prisión Perpetua (base 35 años para cómputo)'
     : `${anios} año(s), ${meses} mes(es), ${dias} día(s) = ${totalDiasCondena} días`;
+  // 8 meses Art. 13 CP
+  const fila8m = document.getElementById('fila-8meses');
+  if (esPenaCorta && fecha8Meses) {
+    document.getElementById('r-8meses').textContent = formatDate(fecha8Meses);
+    fila8m.style.display = '';
+  } else {
+    fila8m.style.display = 'none';
+  }
+
   document.getElementById('r-mitad').textContent          = formatDate(fechaMitad);
   document.getElementById('r-dos-tercios').textContent    = formatDate(fechaDosTercios);
   document.getElementById('r-cumplimiento').textContent   = fechaCumplimiento
