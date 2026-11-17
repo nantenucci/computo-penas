@@ -439,7 +439,7 @@
       <tr id="fila-la-27" style="display:none;">
         <td class="etiqueta">
           Fecha libertad asistida
-          <span class="sub">Ley 27.375 — 6 meses antes del vencimiento</span>
+          <span class="sub">Ley 27.375 — 3 meses antes del vencimiento (art. 54)</span>
         </td>
         <td class="valor" id="r-la-27">—</td>
       </tr>
@@ -472,7 +472,7 @@
 <div class="card" id="nota-la-card" style="display:none;">
   <div class="card-header">LIBERTADES ASISTIDAS — CONSIDERACIONES</div>
   <div class="card-body nota-la">
-    <strong>Ley 27.375:</strong> La libertad asistida procede 6 meses antes del agotamiento de la pena. El juez de ejecución podrá denegar la incorporación al régimen excepcionalmente, por resolución fundada, cuando considere que el condenado puede constituir un peligro para sí o para terceros (art. 54 Ley 24.660 modif. por Ley 27.375).<br><br>
+    <strong>Ley 27.375:</strong> La libertad asistida procede 3 meses antes del agotamiento de la pena. El juez de ejecución podrá denegar la incorporación al régimen excepcionalmente, por resolución fundada, cuando considere que el condenado puede constituir un peligro para sí o para terceros (art. 54 Ley 24.660 modif. por Ley 27.375).<br><br>
     <strong>Ley 26.813:</strong> La libertad asistida procede 6 meses antes del agotamiento de la pena. Se aplica a hechos cometidos con anterioridad a la vigencia de la Ley 27.375 (01/11/2017), salvo que resulte más favorable la nueva ley.
   </div>
 </div>
@@ -692,7 +692,7 @@ function calcular() {
   // Libertad asistida: 6 meses antes del cumplimiento total
   let fechaLA27 = null, fechaLA26 = null;
   if (fechaCumplimiento) {
-    fechaLA27 = subtractMonths(fechaCumplimiento, 6);
+    fechaLA27 = subtractMonths(fechaCumplimiento, 3);   // art. 54 Ley 24.660 sustituido por art. 28 Ley 27.375: tres (3) meses antes del agotamiento
     fechaLA26 = subtractMonths(fechaCumplimiento, 6);
   }
 
